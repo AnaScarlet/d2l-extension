@@ -7,56 +7,34 @@ const button_primary = "#0091EA";
 const button_secondary = text_color;
 
 let discovered_elements = [];
-
+const targetNodes = [];
+const discoveredNodes = [];
 
 window.onload = () => {
+    console.log("Page reloaded");
     dark_mode()
 }
 
+document.addEventListener("keydown", event => {
+    if (event.code === "Tab") {
+        console.log("Tab key detected");
+        console.log("editor element:")
+        //console.log(document.getElementsByClassName("d2l-htmleditor")[0]);   // null
+        let listOfParagraphs = document.getElementById("tinymce").getElementsByTagName("p");
+        let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
+        console.log(lastParagraph);
+        console.log(lastParagraph.innerHTML);
+        if (lastParagraph.innerHTML !== '<br data-mce-bogus="1">')
+            lastParagraph.innerHTML += "&nbsp;&nbsp;&nbsp;&nbsp;";
+        else 
+            lastParagraph.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;";
+        lastParagraph.focus();
+    }
+});
+
 function dark_mode() {
     dfs(document.body, body_bgc, text_color);
-    //let selectorsToWaitFor = ["d2l-navigation-button-notification-icon", "#postReplyPlacehodler_bottom > div", "#postReplyPlacehodler_top > div"
-    //"d2l-dropdown-context-menu",
-        // "d2l-dropdown-content > div > #courseSelectorId", "d2l-dropdown-content > div > div > .d2l-messagebucket-button-container", 
-        // "d2l-dropdown-content > div > div > #AB_DL_PH_Messages", "d2l-dropdown-content > div > div > #AB_DL_PH_Alerts", 
-        // "d2l-dropdown-content > div > div > #AB_DL_PH_Grades", "d2l-dropdown-content > div.d2l-admin-tools > div"
-    //];
-    // waitForElementToDisplay(selectorsToWaitFor, (element) => {
-    //     console.log("got callback about element");
-    //     if (element.shadowRoot && 
-    //     (element.tagName === "d2l-navigation-button-notification-icon".toUpperCase() || 
-    //     element.tagName === "d2l-navigation-button".toUpperCase() || 
-    //     element.tagName === "d2l-icon".toUpperCase())
-    //     ) {
-    //         for (let shadow_c of element.shadowRoot.children){
-    //             dfs(shadow_c, body_bgc, text_color);
-    //         }
-    //     }
-    //     else if (element.tagName === "d2l-dropdown-context-menu".toUpperCase() && element.shadowRoot) {
-    //         console.log("Found d2l-dropdown-context-menu");
-    //         console.log("is shadowRoot = "+element.shadowRoot);
-    //         console.log("Child:");
-    //         console.log(element.childNodes);
-    //         for (let shadow_c of element.shadowRoot.children){
-    //             dfs(shadow_c, body_bgc, text_color);
-    //         }
-    //         dfs(element, body_bgc, text_color);
-    //     }
-    //     // else if (element.tagName === "d2l-dropdown-menu".toUpperCase() && element.shadowRoot) {
-    //     //     for (let shadow_c of element.shadowRoot.children){
-    //     //         dfs(shadow_c, body_bgc, text_color);
-    //     //     }
-    //     //     dfs(element, body_bgc, text_color);
-    //     // }
-    //     else if (element.tagName === "div".toUpperCase()) {
-    //         console.log("Got callback about d2l-dropdown-content's child div");
-    //         dfs(element, body_bgc, text_color);
-    //     }
-    // }, 1000);
 
-
-    const targetNodes = [];
-    const discoveredNodes = [];
 
     let dropdownContentElements = document.getElementsByTagName("d2l-dropdown-content");
     for (let i = 0; i<dropdownContentElements.length; i++) {
@@ -66,64 +44,28 @@ function dark_mode() {
         }
     }
 
-    let postReplyTopXPath = document.evaluate("//*[@id='threadContentsPlaceholder']/div/div[2]/div[4]", document, null, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-    if (postReplyTopXPath) {
-        if (postReplyTopXPath.singleNodeValue) {
-            targetNodes.push(postReplyTopXPath.singleNodeValue);
-        }
-    }
+    // let postReplyTopXPath = document.evaluate("//*[@id='threadContentsPlaceholder']/div/div[2]/div[4]", document, null, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+    // if (postReplyTopXPath) {
+    //     if (postReplyTopXPath.singleNodeValue) {
+    //         targetNodes.push(postReplyTopXPath.singleNodeValue);
+    //     }
+    // }
 
-    let postReplyBottomXPath = document.evaluate("//*[@id='threadContentsPlaceholder']/div/div[2]/div[6]", document, null, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-    if (postReplyBottomXPath) {
-        if (postReplyBottomXPath.singleNodeValue) {
-            targetNodes.push(postReplyBottomXPath.singleNodeValue);
-        }
-    }
+    // let postReplyBottomXPath = document.evaluate("//*[@id='threadContentsPlaceholder']/div/div[2]/div[6]", document, null, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
+    // if (postReplyBottomXPath) {
+    //     if (postReplyBottomXPath.singleNodeValue) {
+    //         targetNodes.push(postReplyBottomXPath.singleNodeValue);
+    //     }
+    // }
 
-    //targetNodes.push(document.getElementById('postReplyPlacehodler_top'));
-    //targetNodes.push(document.getElementById('postReplyPlacehodler_bottom'));
+    // Page gets reloaded and then these are null...
+    targetNodes.push(document.getElementById('postReplyPlacehodler_top'));
+    targetNodes.push(document.getElementById('postReplyPlacehodler_bottom'));
 
     // Options for the observer (which mutations to observe)
     const config = { attributes: true, childList: true, subtree: false };
 
-    // Callback function to execute when mutations are observed
-    const callback = function(mutationsList, myobserver) {
-        // Use traditional 'for loops' for IE 11
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                if (mutation.addedNodes.length !== 0) {
-                    console.log("Added node");
-                    if (!discoveredNodes.includes(mutation.target)) {
-                        dfs(mutation.target, body_bgc, text_color);
-                        discoveredNodes.push(mutation.target);
-                        // let indexToDelete = targetNodes.indexOf(mutation.target);
-                        // if (indexToDelete !== -1) {
-                        //     console.log("Index to delete = " + indexToDelete);
-                        //     console.log("Target nodes:");
-                        //     console.log(targetNodes);
-                        //     targetNodes.splice(indexToDelete, 1);
-                        // }
-                        // if (targetNodes.length === 0) {
-                        //     observer.disconnect();
-                        // }
-                        // if (discoveredNodes.length === targetNodes.length) {
-                        //     console.log("Stopping observer");
-                        //     observer.disconnect();
-                        // }
-                    }
-                }
-                if (mutation.removedNodes.length !== 0) {
-                    console.log("Removed node");
-                }
-            }
-            else if (mutation.type === 'attributes') {
-                if (mutation.attributeName === "opened") {
-                    discoveredNodes.push(mutation.target);
-                }
-                //console.log('The ' + mutation.attributeName + ' attribute was modified.');
-            }
-        }
-    }
+    
 
     // Create an observer instance linked to the callback function
     const observer = new MutationObserver(callback);
@@ -134,8 +76,6 @@ function dark_mode() {
             observer.observe(node, config);
         } catch (err) {
             console.log(err);
-            // observer.observe(document.getElementById('postReplyPlacehodler_top'));
-            // observer.observe(document.getElementById('postReplyPlacehodler_bottom'));
         }
     });
     
@@ -143,6 +83,45 @@ function dark_mode() {
     console.log("Number of target nodes:");
     console.log(targetNodes.length);
 
+}
+
+// Callback function to execute when mutations are observed
+const callback = function(mutationsList, myobserver) {
+    // Use traditional 'for loops' for IE 11
+    for (const mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+            if (mutation.addedNodes.length !== 0) {
+                console.log("Added node");
+                if (!discoveredNodes.includes(mutation.target)) {
+                    dfs(mutation.target, body_bgc, text_color);
+                    discoveredNodes.push(mutation.target);
+                    // let indexToDelete = targetNodes.indexOf(mutation.target);
+                    // if (indexToDelete !== -1) {
+                    //     console.log("Index to delete = " + indexToDelete);
+                    //     console.log("Target nodes:");
+                    //     console.log(targetNodes);
+                    //     targetNodes.splice(indexToDelete, 1);
+                    // }
+                    // if (targetNodes.length === 0) {
+                    //     observer.disconnect();
+                    // }
+                    // if (discoveredNodes.length === targetNodes.length) {
+                    //     console.log("Stopping observer");
+                    //     observer.disconnect();
+                    // }
+                }
+            }
+            if (mutation.removedNodes.length !== 0) {
+                console.log("Removed node");
+            }
+        }
+        else if (mutation.type === 'attributes') {
+            if (mutation.attributeName === "opened") {
+                discoveredNodes.push(mutation.target);
+            }
+            //console.log('The ' + mutation.attributeName + ' attribute was modified.');
+        }
+    }
 }
 
 
@@ -178,6 +157,9 @@ function dfs(element, backgroundColor, foregroundColor) {
     }
     else {
         element.style.backgroundColor = backgroundColor;
+    }
+    if (element.id === "tinymce") {
+        return;
     }
     for (let c of element.children) {
         if (!discovered_elements.includes(c)) {
