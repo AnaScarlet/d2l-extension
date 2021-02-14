@@ -17,20 +17,69 @@ window.onload = () => {
 
 document.addEventListener("keydown", event => {
     if (event.code === "Tab") {
-        console.log("Tab key detected");
-        console.log("editor element:")
+        //console.log("Tab key detected");
+        event.preventDefault();
+        event.stopPropagation();
+
+        //console.log("editor element:")
         //console.log(document.getElementsByClassName("d2l-htmleditor")[0]);   // null
         let listOfParagraphs = document.getElementById("tinymce").getElementsByTagName("p");
         let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
-        console.log(lastParagraph);
-        console.log(lastParagraph.innerHTML);
-        if (lastParagraph.innerHTML !== '<br data-mce-bogus="1">')
+        //console.log(lastParagraph);
+        //console.log(lastParagraph.innerHTML);
+        let originalLength = 0;
+        if (lastParagraph.innerHTML !== '<br data-mce-bogus="1">') {
+            let originalMsg = lastParagraph.innerHTML.split('<br data-mce-bogus="1">')[0];
+            let strList = originalMsg.split("&nbsp; ");
+            //console.log(strList);
+            for (let str of strList) {
+                if (str) {
+                    let removeNspbs = str.split("&nbsp;")[0];
+                    originalLength += (str.match(/&nbsp;/g) || []).length;  // how many nspb's there are
+                    //console.log("Adding " + removeNspbs.length + " to length")
+                    originalLength += removeNspbs.length;
+                }
+            }
+            originalLength += (originalMsg.match(/&nbsp; /g) || []).length * 2;  // how many modified nspb's there were
+            
             lastParagraph.innerHTML += "&nbsp;&nbsp;&nbsp;&nbsp;";
-        else 
+        } 
+        else {
             lastParagraph.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;";
-        lastParagraph.focus();
+        }
+        //console.log("Num chars in mgs: " + originalLength);
+
+        let pos = originalLength + 4;
+        positionCursor(lastParagraph, pos);
     }
 });
+
+function positionCursor(tag, pos) { 
+              
+   // var tag = document.getElementById("editable"); 
+      
+    // Creates range object 
+    var setpos = document.createRange(); 
+      
+    // Creates object for selection 
+    var set = window.getSelection();
+    
+    // Set start position of range 
+    setpos.setStart(tag.childNodes[0], pos); 
+      
+    // Collapse range within its boundary points 
+    // Returns boolean 
+    setpos.collapse(true); 
+      
+    // Remove all ranges set 
+    set.removeAllRanges(); 
+      
+    // Add range with respect to range object. 
+    set.addRange(setpos); 
+      
+    // Set cursor on focus 
+    tag.focus(); 
+} 
 
 function dark_mode() {
     dfs(document.body, body_bgc, text_color);
