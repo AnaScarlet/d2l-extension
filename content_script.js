@@ -10,6 +10,23 @@ let discovered_elements = [];
 const targetNodes = [];
 const discoveredNodes = [];
 
+const port = chrome.runtime.connect();
+
+window.addEventListener("message", function(event) {
+    console.log("Message from source: " + event.source);
+    console.log("Is event from page? " + event.data.type == "FROM_PAGE");
+    console.log("Message:");
+    console.log(event.data.text)
+
+    if (event.source != window)
+    return;
+
+    if (event.data.type && (event.data.type == "FROM_PAGE")) {
+        console.log("Content script received: " + event.data.text);
+        port.postMessage(event.data.text);
+    }
+}, false);
+
 window.onload = () => {
     console.log("Page reloaded");
     dark_mode()
