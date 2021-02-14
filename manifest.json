@@ -1,7 +1,7 @@
 {
-  "name": "Getting Started Example",
+  "name": "D2L Coding",
   "version": "1.0",
-  "description": "Build an Extension!",
+  "description": "D2L coding support extension",
   "permissions": ["activeTab", "declarativeContent", "storage"],
   "options_page": "options.html",
   "background": {
