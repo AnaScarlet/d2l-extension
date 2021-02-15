@@ -71,9 +71,8 @@ document.addEventListener("keydown", event => {
     }
 });
 
+// Original from: https://www.geeksforgeeks.org/how-to-set-cursor-position-in-content-editable-element-using-javascript/
 function positionCursor(tag, pos) { 
-              
-   // var tag = document.getElementById("editable"); 
       
     // Creates range object 
     var setpos = document.createRange(); 
