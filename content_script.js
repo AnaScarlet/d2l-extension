@@ -9,27 +9,28 @@ const button_secondary = text_color;
 let discovered_elements = [];
 const targetNodes = [];
 const discoveredNodes = [];
+let dark_mode_on = false;
 
-const port = chrome.runtime.connect();
-
-window.addEventListener("message", function(event) {
-    console.log("Message from source: " + event.source);
-    console.log("Is event from page? " + event.data.type == "FROM_PAGE");
-    console.log("Message:");
-    console.log(event.data.text)
-
-    if (event.source != window)
-    return;
-
-    if (event.data.type && (event.data.type == "FROM_PAGE")) {
-        console.log("Content script received: " + event.data.text);
-        port.postMessage(event.data.text);
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.dark_theme === "true") {
+    sendResponse({dark_theme: "on"});
+    dark_mode();
     }
-}, false);
+    else {
+    sendResponse({dark_theme: "off"});
+    if (dark_mode_on) 
+        reloadPageToRemoveDarkMode();
+    }
+});
 
 window.onload = () => {
-    console.log("Page reloaded");
-    dark_mode()
+    console.log("sending message");
+    chrome.runtime.sendMessage({d2l_page: "hello"}, (response) => {
+        console.log(response.dark_theme);
+        if (response.dark_theme === "true" && !dark_mode_on) {
+            dark_mode();
+        }
+    });
 }
 
 document.addEventListener("keydown", event => {
@@ -97,9 +98,14 @@ function positionCursor(tag, pos) {
     tag.focus(); 
 } 
 
+function reloadPageToRemoveDarkMode() {
+    location.reload();
+    dark_mode_on = false;
+}
+
 function dark_mode() {
     dfs(document.body, body_bgc, text_color);
-
+    dark_mode_on = true;
 
     let dropdownContentElements = document.getElementsByTagName("d2l-dropdown-content");
     for (let i = 0; i<dropdownContentElements.length; i++) {
