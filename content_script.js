@@ -1,25 +1,38 @@
 
 const dark = "#333333";
 const body_bgc = "#424242";
+const light_bgc = "#F5F5F5";
+const original_text_color = "#494C4E";
 const text_color = "#FAFAFA";
 const link_color = "#80D8FF";
 const button_primary = "#0091EA";
-const button_secondary = text_color;
+const button_secondary = light_bgc;
+
+const RETURN = "return now";
+const CONTINUE = "continue to dfs";
 
 let discovered_elements = [];
-const targetNodes = [];
-const discoveredNodes = [];
 let dark_mode_on = false;
+
+// Attempt to bring dark mode faster....
+document.body.onload = () => {
+    document.body.style.backgroundColor = body_bgc;
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.dark_theme === "true") {
-    sendResponse({dark_theme: "on"});
-    dark_mode();
+        sendResponse({dark_theme: "on"});
+        dark_mode();
     }
     else {
-    sendResponse({dark_theme: "off"});
-    if (dark_mode_on) 
-        reloadPageToRemoveDarkMode();
+        sendResponse({dark_theme: "off"});
+        if (dark_mode_on) {
+            reloadPageToRemoveDarkMode();
+        }
+        else {
+            // Bring back body's original color
+            document.body.style.backgroundColor = "#FFFFFF";
+        }
     }
 });
 
@@ -35,7 +48,6 @@ window.onload = () => {
 
 document.addEventListener("keydown", event => {
     if (event.code === "Tab") {
-        //console.log("Tab key detected");
         event.preventDefault();
         event.stopPropagation();
 
@@ -105,7 +117,16 @@ function reloadPageToRemoveDarkMode() {
 
 function dark_mode() {
     dfs(document.body, body_bgc, text_color);
+
+    setTimeout(() => {
+        watchDynamicElementsForChanges();
+    }, 500);
+}
+
+function watchDynamicElementsForChanges() {
+    discovered_elements = [];
     dark_mode_on = true;
+    const targetNodes = [];
 
     let dropdownContentElements = document.getElementsByTagName("d2l-dropdown-content");
     for (let i = 0; i<dropdownContentElements.length; i++) {
@@ -115,28 +136,27 @@ function dark_mode() {
         }
     }
 
-    // let postReplyTopXPath = document.evaluate("//*[@id='threadContentsPlaceholder']/div/div[2]/div[4]", document, null, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-    // if (postReplyTopXPath) {
-    //     if (postReplyTopXPath.singleNodeValue) {
-    //         targetNodes.push(postReplyTopXPath.singleNodeValue);
-    //     }
-    // }
+    let moreLessElements = document.getElementsByTagName('d2l-more-less');
+    for (let i = 0; i<moreLessElements.length; i++) {
+        let elem = moreLessElements[i];
+        targetNodes.push(elem);
+    }
 
-    // let postReplyBottomXPath = document.evaluate("//*[@id='threadContentsPlaceholder']/div/div[2]/div[6]", document, null, XPathResult.ANY_UNORDERED_NODE_TYPE, null);
-    // if (postReplyBottomXPath) {
-    //     if (postReplyBottomXPath.singleNodeValue) {
-    //         targetNodes.push(postReplyBottomXPath.singleNodeValue);
-    //     }
-    // }
+    let mainPageElement = document.getElementsByClassName("d2l-page-main-padding");
+    for (let i = 0; i<mainPageElement.length; i++) {
+        let elem = mainPageElement[i];
+        targetNodes.push(elem);
+    }
+
+    targetNodes.push(document.getElementById("d2l_two_panel_selector_main"));
 
     // Page gets reloaded and then these are null...
     targetNodes.push(document.getElementById('postReplyPlacehodler_top'));
     targetNodes.push(document.getElementById('postReplyPlacehodler_bottom'));
+    targetNodes.push(document.getElementById('createThreadPlaceholder'));
 
     // Options for the observer (which mutations to observe)
     const config = { attributes: true, childList: true, subtree: false };
-
-    
 
     // Create an observer instance linked to the callback function
     const observer = new MutationObserver(callback);
@@ -149,10 +169,8 @@ function dark_mode() {
             console.log(err);
         }
     });
-    
 
-    console.log("Number of target nodes:");
-    console.log(targetNodes.length);
+    console.log(targetNodes);
 
 }
 
@@ -162,35 +180,24 @@ const callback = function(mutationsList, myobserver) {
     for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
             if (mutation.addedNodes.length !== 0) {
-                console.log("Added node");
-                if (!discoveredNodes.includes(mutation.target)) {
-                    dfs(mutation.target, body_bgc, text_color);
-                    discoveredNodes.push(mutation.target);
-                    // let indexToDelete = targetNodes.indexOf(mutation.target);
-                    // if (indexToDelete !== -1) {
-                    //     console.log("Index to delete = " + indexToDelete);
-                    //     console.log("Target nodes:");
-                    //     console.log(targetNodes);
-                    //     targetNodes.splice(indexToDelete, 1);
-                    // }
-                    // if (targetNodes.length === 0) {
-                    //     observer.disconnect();
-                    // }
-                    // if (discoveredNodes.length === targetNodes.length) {
-                    //     console.log("Stopping observer");
-                    //     observer.disconnect();
-                    // }
+                if (mutation.target.id === "d2l_two_panel_selector_main") {
+                    setTimeout(() => {
+                        dfs(mutation.target, body_bgc, text_color);
+                        discovered_elements = [];
+                    }, 300);
                 }
-            }
-            if (mutation.removedNodes.length !== 0) {
-                console.log("Removed node");
+                else {
+                    dfs(mutation.target, body_bgc, text_color);
+                    discovered_elements = [];
+                }
             }
         }
         else if (mutation.type === 'attributes') {
-            if (mutation.attributeName === "opened") {
-                discoveredNodes.push(mutation.target);
+            if (mutation.target.tagName === "d2l-more-less".toUpperCase()) {
+                console.log("attribute mutation of d2l-more-less");
+                dfs(mutation.target, body_bgc, text_color);
+                discovered_elements = [];
             }
-            //console.log('The ' + mutation.attributeName + ' attribute was modified.');
         }
     }
 }
@@ -200,38 +207,15 @@ function dfs(element, backgroundColor, foregroundColor) {
     if (!element || !element.style)
         return;
     discovered_elements.push(element);
-    if (element.classList.contains("d2l-link") || element.classList.contains("d2l-button-subtle-icon") 
-    || element.classList.contains("d2l-button-subtle-content")) {
-        element.style.color = link_color;
-    }
-    else {
-        element.style.color = foregroundColor;
-    }
-    if (element.classList.contains("d2l-button")) {
-        //console.log("Found a button");
-        if (element.hasAttribute("primary")) {
-            element.style.backgroundColor = button_primary;
-        }
-        else {
-            element.style.backgroundColor = button_secondary;
-            element.style.color = body_bgc;
-        }
+
+    let returnValue = applyStylingToElement(element, backgroundColor, foregroundColor);
+    if (returnValue.return === RETURN) {
         return;
     }
-    else if (element.classList.contains("d2l-htmleditor-group-bordered")) {
-        element.style.borderColor = dark;
-    }
-    else if (element.classList.contains("d2l-htmleditor-button")) {
-        element.style.backgroundColor = button_secondary;
-        element.style.color = body_bgc;
-        return;
-    }
-    else {
-        element.style.backgroundColor = backgroundColor;
-    }
-    if (element.id === "tinymce") {
-        return;
-    }
+
+    backgroundColor = returnValue.backgroundColor;
+    foregroundColor = returnValue.foregroundColor;
+    
     for (let c of element.children) {
         if (!discovered_elements.includes(c)) {
             dfs(c, backgroundColor, foregroundColor);
@@ -239,37 +223,85 @@ function dfs(element, backgroundColor, foregroundColor) {
     }
     if (element.shadowRoot) {
         for (let shadow_c of element.shadowRoot.children){
-            dfs(shadow_c, backgroundColor, foregroundColor);
+            if (!discovered_elements.includes(shadow_c)) {
+                dfs(shadow_c, backgroundColor, foregroundColor);
+            }
         }
     }
 }
 
-// Original function from: https://stackoverflow.com/questions/5525071/how-to-wait-until-an-element-exists/57395241#57395241
-// function waitForElementToDisplay(selectors, callback, checkFrequencyInMs, timeoutInMs) {
-//     var startTimeInMs = Date.now();
-//     var elem;
-//     (function loopSearch() {
-//         for (let selector of selectors) {
-//             elem = document.querySelector(selector);
-//             if (elem != null) {
-//                 callback(elem);
-//                 let indexToDelete = selectors.indexOf(selector);
-//                 selectors.splice(indexToDelete, 1);  // best for memory
-//                 //delete selectors[indexToDelete];  // replaces array element with empty
-//                 //selectors = selectors.filter(elem => elem !== selector);  // causes memory leak! yikes!
-//                 console.log("New selectors:");
-//                 console.log(selectors);
-//                 if (selectors.length === 0) {
-//                     return;
-//                 }
-//             }
-//             else {
-//                 setTimeout(function () {
-//                 if (timeoutInMs && Date.now() - startTimeInMs > timeoutInMs)
-//                     return;
-//                 loopSearch();
-//                 }, checkFrequencyInMs);
-//             }
-//         }
-//     })();
-// }
+function applyStylingToElement(element, backgroundColor, foregroundColor) {
+    if (element.getAttribute("aria-labelledby") === "ActivityFeedWidget") {
+        console.log("Found activity widget");
+        element.style.color = original_text_color; // original text color since it gets overriden by "inherit"
+        element.style.backgroundColor = light_bgc;
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
+    if (element.hasAttribute("fill") && element.hasAttribute("stroke")) {
+        element.setAttribute("fill", light_bgc);
+        element.setAttribute("stroke", button_primary);
+    }
+    if ((element.tagName === "A" && ! element.classList.contains("d2l-navigation-s-link") && !element.classList.contains("d2l-navigation-s-home-icon")
+        && !element.classList.contains("vui-button") && !element.classList.contains("d2l-iterator-button")) 
+        || element.classList.contains("d2l-link") || element.classList.contains("d2l-button-subtle-icon") 
+        || element.classList.contains("d2l-button-subtle-content") || element.classList.contains("d2l-linkheading-link")) {
+        element.style.color = link_color;
+        return {return: CONTINUE, backgroundColor: backgroundColor, foregroundColor: link_color};
+    }
+    if (element.classList.contains("d_tabs_c_s")) {
+        element.style.borderBottomColor = backgroundColor;
+    }
+    if (element.classList.contains("d_tabs_text")) {
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
+    else {
+        element.style.color = foregroundColor;
+    }
+    if (element.classList.contains("d2l-button")) {
+        if (element.hasAttribute("primary")) {
+            element.style.backgroundColor = button_primary;
+        }
+        else {
+            element.style.backgroundColor = button_secondary;
+            element.style.color = body_bgc;
+        }
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
+    else if (element.classList.contains("d2l-htmleditor-group-bordered")) {
+        element.style.borderColor = dark;
+    }
+    else if (element.classList.contains("d2l-le-calendar-today")) {
+        element.style.backgroundColor = light_bgc;
+        element.style.color = body_bgc;
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
+    else if (element.classList.contains("d2l-htmleditor-button")) {
+        element.style.backgroundColor = button_secondary;
+        element.style.color = body_bgc;
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
+    else if (element.tagName === "H1" || element.tagName === "H2" || element.tagName === "H3" || element.tagName === "H4" || element.tagName === "H5") {
+        element.style.backgroundColor = "#ffffff00"  // transparent
+    }
+    else if (element.classList.contains("d2l-page-search")) {
+        element.style.backgroundColor = "#ffffff00"  // transparent
+    }
+    else if (element.classList.contains("d2l-more-less-blur")) {
+        element.style.background = "linear-gradient(#ffffff00, #333333)";
+    }
+    else if (element.classList.contains("d2l-twopanelselector-side-sep") || element.classList.contains("d2l-twopanelselector-side")) {
+        element.style.background = "linear-gradient(90deg, #ffffff00, #333333)";
+    }
+    else if (element.classList.contains("d2l-collapsepane-header")) {
+        element.style.background = "linear-gradient(#616161, #333333)";
+        element.style.borderColor = dark;
+        return {return: CONTINUE, backgroundColor: "#ffffff00", foregroundColor: foregroundColor};
+    }
+    else {
+        element.style.backgroundColor = backgroundColor;
+    }
+    if (element.id === "tinymce") {
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
+    return {return: CONTINUE, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+}
