@@ -120,12 +120,35 @@ function dark_mode() {
 
     setTimeout(() => {
         watchDynamicElementsForChanges();
-    }, 500);
+    }, 300);
 }
 
 function watchDynamicElementsForChanges() {
     discovered_elements = [];
     dark_mode_on = true;
+
+    console.log(window.location.href);
+    if (window.location.href === "https://d2l.ucalgary.ca/d2l/home") {
+        console.log("On home page. Handle tabs.")
+
+        setTimeout(() => {
+            monitorTabClicks();
+        }, 2000)
+    
+    
+        let d2lTabsElement = document.getElementsByTagName("d2l-my-courses")[0].shadowRoot.children[1].shadowRoot.children[2].children;
+        for (let i = 0; i<d2lTabsElement.length; i++) {
+            let elem = d2lTabsElement[i];
+            
+            // Wait for spinner to go away!
+            setTimeout(() => {
+                dfs(elem, body_bgc, text_color);
+                discovered_elements = [];
+            }, 2500)
+        }
+    }
+    
+
     const targetNodes = [];
 
     let dropdownContentElements = document.getElementsByTagName("d2l-dropdown-content");
@@ -147,6 +170,13 @@ function watchDynamicElementsForChanges() {
         let elem = mainPageElement[i];
         targetNodes.push(elem);
     }
+
+    let dropdownContent = document.getElementsByTagName("d2l-dropdown-context-menu");
+    for (let i = 0; i<dropdownContent.length; i++) {
+        let elem = dropdownContent[i];
+        targetNodes.push(elem);
+    }
+
 
     targetNodes.push(document.getElementById("d2l_two_panel_selector_main"));
 
@@ -172,6 +202,24 @@ function watchDynamicElementsForChanges() {
 
     console.log(targetNodes);
 
+}
+
+function monitorTabClicks() {
+    let tabButtons = document.getElementsByTagName("d2l-my-courses")[0].shadowRoot.querySelector("d2l-my-courses-container").shadowRoot.querySelector("d2l-tabs").shadowRoot.querySelector("div.d2l-tabs-layout.d2l-body-compact.d2l-tabs-layout-shown > div.d2l-tabs-container > div.arrow-keys-container > div").children;
+    for (let tab of tabButtons) {
+        tab.addEventListener("click", function() {
+            let d2lTabsElement = document.getElementsByTagName("d2l-my-courses")[0].shadowRoot.children[1].shadowRoot.children[2].children;
+            for (let i = 0; i<d2lTabsElement.length; i++) {
+                let elem = d2lTabsElement[i];
+                
+                // Wait for spinner to go away!
+                setTimeout(() => {
+                    dfs(elem, body_bgc, text_color);
+                    discovered_elements = [];
+                }, 2500)
+            }
+        });
+    }
 }
 
 // Callback function to execute when mutations are observed
@@ -231,6 +279,12 @@ function dfs(element, backgroundColor, foregroundColor) {
 }
 
 function applyStylingToElement(element, backgroundColor, foregroundColor) {
+    if (element.classList.contains("d2l-enrollment-card-image-container")) {
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
+    else if (element.tagName === "d2l-dropdown-more".toUpperCase() || element.classList.contains("d2l-card-actions")) {
+        return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
+    }
     if (element.getAttribute("aria-labelledby") === "ActivityFeedWidget") {
         console.log("Found activity widget");
         element.style.color = original_text_color; // original text color since it gets overriden by "inherit"
@@ -270,6 +324,17 @@ function applyStylingToElement(element, backgroundColor, foregroundColor) {
     else if (element.classList.contains("d2l-htmleditor-group-bordered")) {
         element.style.borderColor = dark;
     }
+    else if (element.tagName === "d2l-tabs".toUpperCase()) {
+        let compStyle = element.style;
+        compStyle.setProperty("--d2l-tabs-background-color", dark);
+    }
+    else if (element.tagName === "d2l-dropdown-menu".toUpperCase()) {
+        let compStyle = element.style;
+        compStyle.setProperty("--d2l-dropdown-background-color", body_bgc);
+    }
+    else if (element.classList.contains("d2l-tabs-layout")) {
+        element.style.borderBottomColor = dark;
+    }
     else if (element.classList.contains("d2l-le-calendar-today")) {
         element.style.backgroundColor = light_bgc;
         element.style.color = body_bgc;
@@ -280,10 +345,8 @@ function applyStylingToElement(element, backgroundColor, foregroundColor) {
         element.style.color = body_bgc;
         return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
     }
-    else if (element.tagName === "H1" || element.tagName === "H2" || element.tagName === "H3" || element.tagName === "H4" || element.tagName === "H5") {
-        element.style.backgroundColor = "#ffffff00"  // transparent
-    }
-    else if (element.classList.contains("d2l-page-search")) {
+    else if (element.tagName === "H1" || element.tagName === "H2" || element.tagName === "H3" || element.tagName === "H4" 
+        || element.tagName === "H5" || element.classList.contains("d2l-page-search")) {
         element.style.backgroundColor = "#ffffff00"  // transparent
     }
     else if (element.classList.contains("d2l-more-less-blur")) {
