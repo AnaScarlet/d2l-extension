@@ -13,6 +13,8 @@ const CONTINUE = "continue to dfs";
 
 let discovered_elements = [];
 let dark_mode_on = false;
+var tinyMceParentDocument = document;
+var tinyMceParentWindow = window;
 
 // Attempt to bring dark mode faster....
 document.body.onload = () => {
@@ -44,63 +46,65 @@ window.onload = () => {
     });
 }
 
-document.addEventListener("keydown", event => {
-    if (event.code === "Tab") {
-        event.preventDefault();
-        event.stopPropagation();
+function addKeyListenerToTinymce() {
+    tinyMceParentDocument.addEventListener("keydown", (event) => {
+        if (event.code === "Tab") {
+            event.preventDefault();
+            event.stopPropagation();
 
-        if (!document.getElementById("tinymce")) {
-            return;
-        }
-        let tinyMceParentDocument = document.getElementById("tinymce").ownerDocument;
-        let selection = window.getSelection();
+            if (!this.tinyMceParentDocument.getElementById("tinymce")) {
+                return;
+            }
+            //let tinyMceParentDocument = document.getElementById("tinymce").ownerDocument;
+            let selection = this.tinyMceParentWindow.getSelection();
 
-        if (event.shiftKey === true) {
-            if (selection.isCollapsed == false) {
-                tinyMceParentDocument.execCommand("outdent");
-                return;
-            }
-            let parentNode = selection.anchorNode.parentElement;
-            let lastChild = parentNode.lastChild;
-            if (!lastChild) {
-                return;
-            }
-            
-            if (lastChild.textContent === "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"){
-                parentNode.removeChild(lastChild);
-                let newLastChild = parentNode.lastChild;
-                let range = new Range();
-                range.setStart(newLastChild, newLastChild.length);
-                selection.empty();
-                selection.addRange(range);
-                selection.collapseToEnd();
-            }            
-        }
-        else {
-            if (selection.isCollapsed == false) {
-                tinyMceParentDocument.execCommand("indent");
-                return;
-            }
-            let listOfParagraphs = document.getElementById("tinymce").getElementsByTagName("p");
-            let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
-            let originalMsg = lastParagraph.innerHTML.split('<br data-mce-bogus="1">')[0];
-            if (originalMsg.length > 0) {
+            if (event.shiftKey === true) {
+                if (selection.isCollapsed == false) {
+                    this.tinyMceParentDocument.execCommand("outdent");
+                    return;
+                }
                 let parentNode = selection.anchorNode.parentElement;
-                let newTextNode = parentNode.appendChild(
-                    tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
-                selection.extend(newTextNode, newTextNode.length);
-                selection.collapseToEnd();
+                let lastChild = parentNode.lastChild;
+                if (!lastChild) {
+                    return;
+                }
+                
+                if (lastChild.textContent === "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"){
+                    parentNode.removeChild(lastChild);
+                    let newLastChild = parentNode.lastChild;
+                    let range = new Range();
+                    range.setStart(newLastChild, newLastChild.length);
+                    selection.empty();
+                    selection.addRange(range);
+                    selection.collapseToEnd();
+                }            
             }
             else {
-                lastParagraph.removeChild(lastParagraph.children[0]); // remove the br
-                let newTextNode = lastParagraph.appendChild(
-                    tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
-                selection.extend(newTextNode, newTextNode.length);
-                selection.collapseToEnd();
-            }
-        }    
-    }
-});
+                if (selection.isCollapsed == false) {
+                    this.tinyMceParentDocument.execCommand("indent");
+                    return;
+                }
+                let listOfParagraphs = this.tinyMceParentDocument.getElementById("tinymce").getElementsByTagName("p");
+                let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
+                let originalMsg = lastParagraph.innerHTML.split('<br data-mce-bogus="1">')[0];
+                if (originalMsg.length > 0) {
+                    let parentNode = selection.anchorNode.parentElement;
+                    let newTextNode = parentNode.appendChild(
+                        this.tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
+                    selection.extend(newTextNode, newTextNode.length);
+                    selection.collapseToEnd();
+                }
+                else {
+                    lastParagraph.removeChild(lastParagraph.children[0]); // remove the br
+                    let newTextNode = lastParagraph.appendChild(
+                        this.tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
+                    selection.extend(newTextNode, newTextNode.length);
+                    selection.collapseToEnd();
+                }
+            }    
+        }
+    });
+}
 
 
 function reloadPageToRemoveDarkMode() {
@@ -172,10 +176,14 @@ function watchDynamicElementsForChanges() {
 
     targetNodes.push(document.getElementById("d2l_two_panel_selector_main"));
 
-    // Page gets reloaded and then these are null...
-    targetNodes.push(document.getElementById('postReplyPlacehodler_top'));
-    targetNodes.push(document.getElementById('postReplyPlacehodler_bottom'));
-    targetNodes.push(document.getElementById('createThreadPlaceholder'));
+    // If page gets reloaded and then these elements are null...
+    if (window.location.href.match(/https:\/\/d2l\.ucalgary\.ca.*discussions\/topics/g) !== null) {
+        targetNodes.push(document.getElementById('createThreadPlaceholder'));
+    }
+    else if (window.location.href.match(/https:\/\/d2l\.ucalgary\.ca.*discussions\/threads/) !== null) {
+        targetNodes.push(document.getElementById('postReplyPlacehodler_top'));
+        targetNodes.push(document.getElementById('postReplyPlacehodler_bottom'));
+    }
 
     // Options for the observer (which mutations to observe)
     const config = { attributes: true, childList: true, subtree: false };
@@ -222,6 +230,52 @@ const callback = function(mutationsList, myobserver) {
                     setTimeout(() => {
                         dfs(mutation.target, body_bgc, text_color);
                         discovered_elements = [];
+                    }, 300);
+                }
+                else if (mutation.target.id === "createThreadPlaceholder") {
+                    setTimeout(() => {
+                        let newThreadIframe = document.getElementById("newThread$threadData$message$html_ifr");
+                        tinyMceParentDocument = newThreadIframe.contentDocument || newThreadIframe.contentWindow.document;
+                        tinyMceParentWindow = newThreadIframe.contentWindow;
+                        dfs(tinyMceParentDocument.body, body_bgc, text_color);
+                        dfs(mutation.target, body_bgc, text_color);
+                        addKeyListenerToTinymce();
+                    }, 300);
+                }
+                else if (mutation.target.id === "postReplyPlacehodler_top") {
+                    setTimeout(() => {
+                        let newThreadIframe = document.querySelector(".d2l-htmleditor-iframecontainer > div > div > div > iframe");
+                        if (!newThreadIframe) {
+                            console.log("Error: no thread editor iframe found.");
+                        }
+                        tinyMceParentDocument = newThreadIframe.contentDocument || newThreadIframe.contentWindow.document;
+                        tinyMceParentWindow = newThreadIframe.contentWindow;
+                        dfs(tinyMceParentDocument.body, body_bgc, text_color);
+                        dfs(mutation.target, body_bgc, text_color);
+                        addKeyListenerToTinymce();
+                    }, 300);
+                }
+                else if (mutation.target.id === "postReplyPlacehodler_bottom") {
+                    setTimeout(() => {
+                        let newThreadIframes = document.querySelectorAll(".d2l-htmleditor-iframecontainer > div > div > div > iframe");
+                        if (!newThreadIframes) {
+                            console.log("Error: no thread editor iframe found.");
+                        }
+                        let newThreadIframe;
+                        if (newThreadIframes.length === 1) {
+                            newThreadIframe = newThreadIframes[0];  // the bottom one is the only open text box
+                        }
+                        else if (newThreadIframes.length === 2) {
+                            newThreadIframe = newThreadIframes[1];  // the bottom text box is the second item in the list
+                        }
+                        else {
+                            console.log("More than 2 thread text boxes found!");
+                        }
+                        tinyMceParentDocument = newThreadIframe.contentDocument || newThreadIframe.contentWindow.document;
+                        tinyMceParentWindow = newThreadIframe.contentWindow;
+                        dfs(tinyMceParentDocument.body, body_bgc, text_color);
+                        dfs(mutation.target, body_bgc, text_color);
+                        addKeyListenerToTinymce();
                     }, 300);
                 }
                 else {
@@ -283,8 +337,8 @@ function applyStylingToElement(element, backgroundColor, foregroundColor) {
         element.setAttribute("fill", light_bgc);
         element.setAttribute("stroke", button_primary);
     }
-    if ((element.tagName === "A" && ! element.classList.contains("d2l-navigation-s-link") && !element.classList.contains("d2l-navigation-s-home-icon")
-        && !element.classList.contains("vui-button") && !element.classList.contains("d2l-iterator-button")) 
+    if ((element.tagName === "A" && !element.classList.contains("d2l-navigation-s-link") && !element.classList.contains("d2l-navigation-s-home-icon")
+        && !element.classList.contains("vui-button") && !element.classList.contains("d2l-iterator-button") && !element.classList.contains("d2l-htmleditor-button"))
         || element.classList.contains("d2l-link") || element.classList.contains("d2l-button-subtle-icon") 
         || element.classList.contains("d2l-button-subtle-content") || element.classList.contains("d2l-linkheading-link")) {
         element.style.color = link_color;
