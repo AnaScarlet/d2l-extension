@@ -53,17 +53,38 @@ document.addEventListener("keydown", event => {
             return;
         }
         let tinyMceParentDocument = document.getElementById("tinymce").ownerDocument;
+        let selection = window.getSelection();
 
         if (event.shiftKey === true) {
-            tinyMceParentDocument.execCommand("outdent");
-            return;
+            if (selection.isCollapsed == false) {
+                tinyMceParentDocument.execCommand("outdent");
+                return;
+            }
+            let parentNode = selection.anchorNode.parentElement;
+            let lastChild = parentNode.lastChild;
+            if (!lastChild) {
+                return;
+            }
+            
+            if (lastChild.textContent === "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"){
+                parentNode.removeChild(lastChild);
+                let newLastChild = parentNode.lastChild;
+                let range = new Range();
+                range.setStart(newLastChild, newLastChild.length);
+                selection.empty();
+                selection.addRange(range);
+                selection.collapseToEnd();
+            }            
         }
         else {
+            if (selection.isCollapsed == false) {
+                tinyMceParentDocument.execCommand("indent");
+                return;
+            }
             let listOfParagraphs = document.getElementById("tinymce").getElementsByTagName("p");
             let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
             let originalMsg = lastParagraph.innerHTML.split('<br data-mce-bogus="1">')[0];
             if (originalMsg.length > 0) {
-                let selection = window.getSelection();
                 let parentNode = selection.anchorNode.parentElement;
                 let newTextNode = parentNode.appendChild(
                     tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
@@ -71,7 +92,11 @@ document.addEventListener("keydown", event => {
                 selection.collapseToEnd();
             }
             else {
-                tinyMceParentDocument.execCommand("indent");
+                lastParagraph.removeChild(lastParagraph.children[0]); // remove the br
+                let newTextNode = lastParagraph.appendChild(
+                    tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
+                selection.extend(newTextNode, newTextNode.length);
+                selection.collapseToEnd();
             }
         }    
     }
