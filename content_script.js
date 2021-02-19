@@ -37,9 +37,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 window.onload = () => {
-    console.log("sending message");
     chrome.runtime.sendMessage({d2l_page: "hello"}, (response) => {
-        console.log(response.dark_theme);
         if (response.dark_theme === "true" && !dark_mode_on) {
             dark_mode();
         }
@@ -51,44 +49,26 @@ document.addEventListener("keydown", event => {
         event.preventDefault();
         event.stopPropagation();
 
-        //console.log("editor element:")
-        //console.log(document.getElementsByClassName("d2l-htmleditor")[0]);   // null
         if (!document.getElementById("tinymce")) {
             return;
         }
         let tinyMceParentDocument = document.getElementById("tinymce").ownerDocument;
 
         if (event.shiftKey === true) {
-            //console.log("Shift key pressed");
             tinyMceParentDocument.execCommand("outdent");
             return;
         }
         else {
-            //console.log("Just Tab pressed");
-            //console.log(window.getSelection());
             let listOfParagraphs = document.getElementById("tinymce").getElementsByTagName("p");
             let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
             let originalMsg = lastParagraph.innerHTML.split('<br data-mce-bogus="1">')[0];
             if (originalMsg.length > 0) {
-                //console.log("text area had stuff in it");
                 let selection = window.getSelection();
-                //console.log("Anchor node parnet:");
                 let parentNode = selection.anchorNode.parentElement;
-                // console.log(parentNode);
-                // console.log("Focus node:");
-                // console.log(selection.focusNode);
-                // console.log("Is selection collapsed = " + selection.isCollapsed);
-                // console.log("anchorOffset:");
-                // console.log(selection.anchorOffset);
-                // console.log("number of ranges:");
-                // console.log(selection.rangeCount);
                 let newTextNode = parentNode.appendChild(
                     tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
-                //console.log("New Text node length = " + newTextNode.length);
                 selection.extend(newTextNode, newTextNode.length);
                 selection.collapseToEnd();
-                // console.log("New anchorOffset:");
-                // console.log(selection.anchorOffset);
             }
             else {
                 tinyMceParentDocument.execCommand("indent");
@@ -97,31 +77,6 @@ document.addEventListener("keydown", event => {
     }
 });
 
-// Original from: https://www.geeksforgeeks.org/how-to-set-cursor-position-in-content-editable-element-using-javascript/
-function positionCursor(tag, pos) { 
-      
-    // Creates range object 
-    var setpos = document.createRange(); 
-      
-    // Creates object for selection 
-    var set = window.getSelection();
-    
-    // Set start position of range 
-    setpos.setStart(tag.childNodes[0], pos); 
-      
-    // Collapse range within its boundary points 
-    // Returns boolean 
-    setpos.collapse(true); 
-      
-    // Remove all ranges set 
-    set.removeAllRanges(); 
-      
-    // Add range with respect to range object. 
-    set.addRange(setpos); 
-      
-    // Set cursor on focus 
-    tag.focus(); 
-} 
 
 function reloadPageToRemoveDarkMode() {
     location.reload();
@@ -140,9 +95,8 @@ function watchDynamicElementsForChanges() {
     discovered_elements = [];
     dark_mode_on = true;
 
-    console.log(window.location.href);
     if (window.location.href === "https://d2l.ucalgary.ca/d2l/home") {
-        console.log("On home page. Handle tabs.")
+        //On home page. Handle tabs.
 
         setTimeout(() => {
             monitorTabClicks();
@@ -213,8 +167,6 @@ function watchDynamicElementsForChanges() {
         }
     });
 
-    console.log(targetNodes);
-
 }
 
 function monitorTabClicks() {
@@ -255,7 +207,6 @@ const callback = function(mutationsList, myobserver) {
         }
         else if (mutation.type === 'attributes') {
             if (mutation.target.tagName === "d2l-more-less".toUpperCase()) {
-                console.log("attribute mutation of d2l-more-less");
                 dfs(mutation.target, body_bgc, text_color);
                 discovered_elements = [];
             }
@@ -299,7 +250,6 @@ function applyStylingToElement(element, backgroundColor, foregroundColor) {
         return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
     }
     if (element.getAttribute("aria-labelledby") === "ActivityFeedWidget") {
-        console.log("Found activity widget");
         element.style.color = original_text_color; // original text color since it gets overriden by "inherit"
         element.style.backgroundColor = light_bgc;
         return {return: RETURN, backgroundColor: backgroundColor, foregroundColor: foregroundColor};
