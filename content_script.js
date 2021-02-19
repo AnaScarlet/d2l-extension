@@ -53,34 +53,47 @@ document.addEventListener("keydown", event => {
 
         //console.log("editor element:")
         //console.log(document.getElementsByClassName("d2l-htmleditor")[0]);   // null
-        let listOfParagraphs = document.getElementById("tinymce").getElementsByTagName("p");
-        let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
-        //console.log(lastParagraph);
-        //console.log(lastParagraph.innerHTML);
-        let originalLength = 0;
-        if (lastParagraph.innerHTML !== '<br data-mce-bogus="1">') {
-            let originalMsg = lastParagraph.innerHTML.split('<br data-mce-bogus="1">')[0];
-            let strList = originalMsg.split("&nbsp; ");
-            //console.log(strList);
-            for (let str of strList) {
-                if (str) {
-                    let removeNspbs = str.split("&nbsp;")[0];
-                    originalLength += (str.match(/&nbsp;/g) || []).length;  // how many nspb's there are
-                    //console.log("Adding " + removeNspbs.length + " to length")
-                    originalLength += removeNspbs.length;
-                }
-            }
-            originalLength += (originalMsg.match(/&nbsp; /g) || []).length * 2;  // how many modified nspb's there were
-            
-            lastParagraph.innerHTML += "&nbsp;&nbsp;&nbsp;&nbsp;";
-        } 
-        else {
-            lastParagraph.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;";
+        if (!document.getElementById("tinymce")) {
+            return;
         }
-        //console.log("Num chars in mgs: " + originalLength);
+        let tinyMceParentDocument = document.getElementById("tinymce").ownerDocument;
 
-        let pos = originalLength + 4;
-        positionCursor(lastParagraph, pos);
+        if (event.shiftKey === true) {
+            //console.log("Shift key pressed");
+            tinyMceParentDocument.execCommand("outdent");
+            return;
+        }
+        else {
+            //console.log("Just Tab pressed");
+            //console.log(window.getSelection());
+            let listOfParagraphs = document.getElementById("tinymce").getElementsByTagName("p");
+            let lastParagraph = listOfParagraphs[listOfParagraphs.length-1];
+            let originalMsg = lastParagraph.innerHTML.split('<br data-mce-bogus="1">')[0];
+            if (originalMsg.length > 0) {
+                //console.log("text area had stuff in it");
+                let selection = window.getSelection();
+                //console.log("Anchor node parnet:");
+                let parentNode = selection.anchorNode.parentElement;
+                // console.log(parentNode);
+                // console.log("Focus node:");
+                // console.log(selection.focusNode);
+                // console.log("Is selection collapsed = " + selection.isCollapsed);
+                // console.log("anchorOffset:");
+                // console.log(selection.anchorOffset);
+                // console.log("number of ranges:");
+                // console.log(selection.rangeCount);
+                let newTextNode = parentNode.appendChild(
+                    tinyMceParentDocument.createTextNode("\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"));
+                //console.log("New Text node length = " + newTextNode.length);
+                selection.extend(newTextNode, newTextNode.length);
+                selection.collapseToEnd();
+                // console.log("New anchorOffset:");
+                // console.log(selection.anchorOffset);
+            }
+            else {
+                tinyMceParentDocument.execCommand("indent");
+            }
+        }    
     }
 });
 
