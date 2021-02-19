@@ -136,7 +136,7 @@ function watchDynamicElementsForChanges() {
             setTimeout(() => {
                 dfs(elem, body_bgc, text_color);
                 discovered_elements = [];
-            }, 2500)
+            }, 3000)
         }
     }
     

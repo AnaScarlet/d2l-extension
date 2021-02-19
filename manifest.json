@@ -1,8 +1,8 @@
 {
   "name": "D2L Coding",
-  "version": "1.0",
+  "version": "0.0.0.1",
   "description": "D2L coding support extension",
-  "permissions": ["activeTab", "declarativeContent", "storage"],
+  "permissions": ["declarativeContent"],
   "options_page": "options.html",
   "background": {
     "scripts": ["background.js"],
