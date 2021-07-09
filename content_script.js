@@ -144,61 +144,42 @@ function watchDynamicElementsForChanges() {
         }
     }
     
-
-    const targetNodes = [];
-
-    let dropdownContentElements = document.getElementsByTagName("d2l-dropdown-content");
-    for (let i = 0; i<dropdownContentElements.length; i++) {
-        let elem = dropdownContentElements[i];
-        if (!elem.classList.contains("d2l-menuflyout-dropdown-contents")) {
-            targetNodes.push(elem);
+    /* 
+     * TODO: Not sure if this is needed to get Quiz pages to work since no access...
+     */
+    /*
+    // If page gets reloaded and then these elements are null...
+    if (window.location.href.match(/https:\/\/d2l\.ucalgary\.ca.*\/content.*\/viewContent.*\/View/) !== null) {
+        let textBox = document.querySelector(".d2l-quiz-textbox-html-container");
+        if (textBox) {
+            let newThreadIframe = document.querySelector(".d2l-htmleditor-iframecontainer > div > div > div > iframe");
+            tinyMceParentDocument = newThreadIframe.contentDocument || newThreadIframe.contentWindow.document;
+            tinyMceParentWindow = newThreadIframe.contentWindow;
+            dfs(tinyMceParentDocument.body, body_bgc, text_color);
+            dfs(textBox, body_bgc, text_color);
+            addKeyListenerToTinymce();
         }
     }
-
-    let moreLessElements = document.getElementsByTagName('d2l-more-less');
-    for (let i = 0; i<moreLessElements.length; i++) {
-        let elem = moreLessElements[i];
-        targetNodes.push(elem);
-    }
-
-    let mainPageElement = document.getElementsByClassName("d2l-page-main-padding");
-    for (let i = 0; i<mainPageElement.length; i++) {
-        let elem = mainPageElement[i];
-        targetNodes.push(elem);
-    }
-
-    let dropdownContent = document.getElementsByTagName("d2l-dropdown-context-menu");
-    for (let i = 0; i<dropdownContent.length; i++) {
-        let elem = dropdownContent[i];
-        targetNodes.push(elem);
-    }
-
-
-    targetNodes.push(document.getElementById("d2l_two_panel_selector_main"));
-
-    // If page gets reloaded and then these elements are null...
-    if (window.location.href.match(/https:\/\/d2l\.ucalgary\.ca.*discussions\/topics/g) !== null) {
-        targetNodes.push(document.getElementById('createThreadPlaceholder'));
-    }
-    else if (window.location.href.match(/https:\/\/d2l\.ucalgary\.ca.*discussions\/threads/) !== null) {
-        targetNodes.push(document.getElementById('postReplyPlacehodler_top'));
-        targetNodes.push(document.getElementById('postReplyPlacehodler_bottom'));
-    }
+     */
 
     // Options for the observer (which mutations to observe)
-    const config = { attributes: true, childList: true, subtree: false };
+    const config = { 
+        attributes: true,
+        childList: true,
+        subtree: true    // observes the whole document efficiently
+    };
 
     // Create an observer instance linked to the callback function
     const observer = new MutationObserver(callback);
     
-    targetNodes.forEach((node) => {
-        // Start observing the target node for configured mutations
-        try {
-            observer.observe(node, config);
-        } catch (err) {
-            console.log(err);
-        }
-    });
+    // Start observing the target node for configured mutations
+    try {
+        observer.observe(document.body, config);
+    } catch (err) {
+        console.log(err);
+        console.log("Node:")
+        console.log(node);
+    }
 
 }
 
@@ -401,6 +382,9 @@ function applyStylingToElement(element, backgroundColor, foregroundColor) {
         element.style.background = "linear-gradient(#616161, #333333)";
         element.style.borderColor = dark;
         return {return: CONTINUE, backgroundColor: "#ffffff00", foregroundColor: foregroundColor};
+    }
+    else if (element.classList.contains("d2l-datalist-container")) {
+        element.style.background = backgroundColor;
     }
     else {
         element.style.backgroundColor = backgroundColor;
