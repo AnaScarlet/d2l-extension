@@ -5,3 +5,5 @@ Ucalgary D2L extension
  - dark theme to go easier on your eyes (detailed bug reports appreciated)
 
 License: BSD
+
+[Submit a bug report](https://github.com/AnaScarlet/d2l-extension/issues)
