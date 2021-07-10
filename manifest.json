@@ -1,6 +1,6 @@
 {
   "name": "D2L Coding",
-  "version": "0.0.0.1",
+  "version": "0.0.1.0",
   "description": "D2L coding support extension",
   "permissions": ["declarativeContent"],
   "options_page": "options.html",

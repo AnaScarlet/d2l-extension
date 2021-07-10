@@ -1,3 +1,21 @@
+/******************************************************************************************************************************************************
+ * Copyright 2021 Anastasiya Lazarenko
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ******************************************************************************************************************************************************/
+
 
 const dark = "#333333";
 const body_bgc = "#424242";
@@ -55,10 +73,9 @@ function addKeyListenerToTinymce() {
             if (!this.tinyMceParentDocument.getElementById("tinymce")) {
                 return;
             }
-            //let tinyMceParentDocument = document.getElementById("tinymce").ownerDocument;
             let selection = this.tinyMceParentWindow.getSelection();
 
-            if (event.shiftKey === true) {
+            if (event.shiftKey === true) {              // Shift + Tab to untab
                 if (selection.isCollapsed == false) {
                     this.tinyMceParentDocument.execCommand("outdent");
                     return;
@@ -79,7 +96,7 @@ function addKeyListenerToTinymce() {
                     selection.collapseToEnd();
                 }            
             }
-            else {
+            else {                                      // Just tab
                 if (selection.isCollapsed == false) {
                     this.tinyMceParentDocument.execCommand("indent");
                     return;
@@ -147,7 +164,6 @@ function watchDynamicElementsForChanges() {
     /* 
      * TODO: Not sure if this is needed to get Quiz pages to work since no access...
      */
-    /*
     // If page gets reloaded and then these elements are null...
     if (window.location.href.match(/https:\/\/d2l\.ucalgary\.ca.*\/content.*\/viewContent.*\/View/) !== null) {
         let textBox = document.querySelector(".d2l-quiz-textbox-html-container");
@@ -160,7 +176,6 @@ function watchDynamicElementsForChanges() {
             addKeyListenerToTinymce();
         }
     }
-     */
 
     // Options for the observer (which mutations to observe)
     const config = { 
@@ -202,7 +217,7 @@ function monitorTabClicks() {
 }
 
 // Callback function to execute when mutations are observed
-const callback = function(mutationsList, myobserver) {
+const callback = function(mutationsList) {
     // Use traditional 'for loops' for IE 11
     for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
